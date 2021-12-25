@@ -37,7 +37,7 @@ def captura(dformato, dcalidad):
             stream=yt.streams.get_by_itag(251)
     except:
         print("Hubo un problema al obtener su video")
-        stream = 0
+        exit()
     return stream
 
 #se le asigna un nombre
