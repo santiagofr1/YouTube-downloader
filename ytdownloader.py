@@ -19,7 +19,7 @@ def formato(url):
 
 
 #se selecciona calidad de descarga de mp4
-def calidad(url): #si se da el enter sin nada se descarga igual
+def calidad(url):
     while True:
         print("En que calidad desea descargar su archivo: 1-720, 2-1080")
         dcalidad=input("Calidad: ")
