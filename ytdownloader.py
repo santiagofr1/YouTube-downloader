@@ -1,63 +1,109 @@
 from pytube import YouTube
 from pytube.request import stream
-from pytube.cli import on_progress
+from pytube.cli import download_caption, on_progress
 
-datoformato=0
-contador=0
-print("--------------Convertidor de YouTube--------------")
 
-#importa el url y la funcion de la barra de carga
-url=input("URL: ")
-yt = YouTube(url, on_progress_callback=on_progress) 
-nombre=yt.title
+print("--------------Convertidor de YouTube 2--------------")
 
-#el usuario elige el formato + control de errores
-while datoformato == 0:          
-    print("Elija el formato: 1-mp4, 2-mp3")
-    datoformato=input("Formato: ")
+dcalidad=0
+
+#seleccion del formato
+def formato(url):
+    while True:
+        print("Elija el formato: 1-mp4, 2-mp3")
+        dformato = input("Formato: ")
+        if dformato == str(1) or dformato == str(2):
+            return dformato
+        else:
+            print("Ingrese una opcion valida")
+
+
+#se selecciona calidad de descarga de mp4
+def calidad(url): #si se da el enter sin nada se descarga igual
+    while True:
+        print("En que calidad desea descargar su archivo: 1-720, 2-1080")
+        dcalidad=input("Calidad: ")
+        if dcalidad != str(1) and dcalidad != str(2):
+            print("Ingrese una opcion valida")
+        else:
+            return dcalidad
+
+#se obtiene el stream
+def captura(dformato, dcalidad):
     try:
-        datoformato=int(datoformato)
-        if datoformato != 1 or datoformato != 2:
-            datoformato=0
+        if dformato == str(1):
+            stream=yt.streams.filter(resolution=("720p" if dcalidad == str(1) else "1080p"))
+        else:
+            stream=yt.streams.get_by_itag(251)
     except:
-        print("debe ingresar un numero")
+        print("Hubo un problema al obtener su video")
+        stream = 0
+    return stream
+
+#se le asigna un nombre
+def nombre(dnombre):
+    print("El nombre del archivo sera: " +  dnombre)
+    print("Desea cambiarlo?")
+    while True:
+        change=input("Y/N: ")
+        if change.lower() == "y":
+            dnombre=input("nuevo nombre: ") 
+            break  
+        elif change.lower() == "n":
+            dnombre=yt.title
+            break
+        else:
+            print("Ingrese una opcion valida")
+            continue
+    return dnombre
 
 
-#se elige la calidad del archivo + control de errores, y se busca y almacena el archivo a descargar
-if datoformato==1 :         
-    calidad=0                  
-    while calidad==0:
-        print("Calidad: 1-720, 2-1080 ")
-        calidad=input("Calidad: ")
-        try:
-            calidad=int(calidad)
-            if calidad != 1 or calidad != 2:
-                print("ingrese un numero valido")   
-                calidad=0             
-        except:
-            print("debe ingresar un numero")    
-    stream=yt.streams.filter(resolution=("720p" if calidad==1 else "1080p"))
-else:
-    stream=yt.streams.get_by_itag(251)
+#se descarga 
+def descarga(dformato, dnombre):
+    print("Descargando...")
+    try:
+        if dformato == str(1):
+            stream.first().download(filename = dnombre + ".mp4")
+        else:
+            stream.download(filename = dnombre + ".mp3")
+        print("")
+        print("Descagra exitosa")
+        print("")
+    except:
+        print("Hubo un problema al intentar descargar su archivo")
+        return
+   
 
-print("Preparando descarga...")
+def repetision():
+    while True:
+        print("Desea descargar otro archivo?") 
+        change=input("Y/N ")
+        if change.lower() == "n":
+            print("Finalizando ejecucion")
+            exit()
+        elif change.lower() == "y":
+            return
+        else:
+            print("Opcion invalida")
 
-#se elige si cambiar o no el nombre por defecto
-while True:                 
-    print("El archivo se llamara: " + nombre)
-    change=input("Desea cambiarlo? y/n ").lower()    
-    if change != "y" and change != "n":
-        print("opcion incorrecta")
-    elif change=="y":
-        nombre=input("Nuevo nombre: ")
-    break
 
-#se descarga y muestra la barra de descarga o da error y cierra
-try:       
-    print("Descargando: ")                         
-    if datoformato==1: stream.first().download(filename=nombre + ".mp4")
-    else: stream.download(filename=nombre + ".mp3")
-    print("")
-    print("Descarga exitosa")
-except:
-    print("el video no esta disponible en esa calidad o formato")
+
+#main loop
+while True:
+    url = input("URL: ")
+
+    try:
+        yt = YouTube(url, on_progress_callback=on_progress) 
+        dnombre = yt.title
+    except:
+        print("hubo un problema con su link")
+        break
+
+    dformato = formato(url)
+    if dformato == str(1):
+        dcalidad = calidad(url)
+    stream = captura(dformato, dcalidad)
+    dnombre = nombre(dnombre) 
+    descarga(dformato, dnombre)
+
+    repetision()
