@@ -1,6 +1,8 @@
 from pytube import YouTube
 from pytube.request import stream
 from pytube.cli import download_caption, on_progress
+from pytube import Playlist
+import re
 
 
 print("--------------Convertidor de YouTube 2--------------")
@@ -88,22 +90,38 @@ def repetision():
 
 
 
+
+
 #main loop
 while True:
     url = input("URL: ")
 
-    try:
-        yt = YouTube(url, on_progress_callback=on_progress) 
-        dnombre = yt.title
-    except:
-        print("hubo un problema con su link")
-        break
-
+    toDownload = []
+    if url.find("playlist") <= 0 :
+        toDownload.append(url)
+    else:
+        p = Playlist(url)
+        toDownload = p.video_urls[:len(p)]
+    
     dformato = formato(url)
     if dformato == str(1):
         dcalidad = calidad(url)
-    stream = captura(dformato, dcalidad)
-    dnombre = nombre(dnombre) 
-    descarga(dformato, dnombre)
 
+    for url in toDownload:
+        print(url)
+        try:
+            yt = YouTube(url, on_progress_callback=on_progress)
+            if len(toDownload) == 1:
+                dnombre = nombre(yt.title)
+            else:
+                dnombre = yt.title
+        except:
+            print("hubo un problema con su link")
+            break
+        stream = captura(dformato, dcalidad)
+        descarga(dformato, dnombre)
     repetision()
+            
+        
+    
+
