@@ -2,7 +2,7 @@ from pytube import YouTube
 from pytube.request import stream
 from pytube.cli import download_caption, on_progress
 from pytube import Playlist
-import re
+
 
 
 print("--------------Convertidor de YouTube 2--------------")
