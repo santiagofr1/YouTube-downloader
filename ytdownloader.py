@@ -1,127 +1,100 @@
+ # imports
 from pytube import YouTube
-from pytube.request import stream
-from pytube.cli import download_caption, on_progress
+from pytube.request import *
+from pytube.cli import  on_progress
 from pytube import Playlist
+from getpass import getuser
+import os
 
+usuario = getuser()
 
+print("----- Convertidor 3 -------")
 
-print("--------------Convertidor de YouTube 2--------------")
-
-dcalidad=0
-
-#seleccion del formato
-def formato(url):
-    while True:
-        print("Elija el formato: 1-mp4, 2-mp3")
-        dformato = input("Formato: ")
-        if dformato == str(1) or dformato == str(2):
-            return dformato
-        else:
-            print("Ingrese una opcion valida")
-
-
-#se selecciona calidad de descarga de mp4
-def calidad(url):
-    while True:
-        print("En que calidad desea descargar su archivo: 1-720, 2-1080")
-        dcalidad=input("Calidad: ")
-        if dcalidad != str(1) and dcalidad != str(2):
-            print("Ingrese una opcion valida")
-        else:
-            return dcalidad
-
-#se obtiene el stream
-def captura(dformato, dcalidad):
-    try:
-        if dformato == str(1):
-            stream=yt.streams.filter(resolution=("720p" if dcalidad == str(1) else "1080p"))
-        else:
-            stream=yt.streams.get_by_itag(251)
-    except:
-        print("Hubo un problema al obtener su video")
-        exit()
-    return stream
-
-#se le asigna un nombre
-def nombre(dnombre):
-    print("El nombre del archivo sera: " +  dnombre)
-    print("Desea cambiarlo?")
-    while True:
-        change=input("Y/N: ")
-        if change.lower() == "y":
-            dnombre=input("nuevo nombre: ") 
-            break  
-        elif change.lower() == "n":
-            dnombre=yt.title
-            break
-        else:
-            print("Ingrese una opcion valida")
-            continue
-    return dnombre
-
-
-#se descarga 
-def descarga(dformato, dnombre):
-    print("Descargando...")
-    try:
-        if dformato == str(1):
-            stream.first().download(filename = dnombre + ".mp4")
-        else:
-            stream.download(filename = dnombre + ".mp3")
-        print("")
-        print("Descagra exitosa")
-        print("")
-    except:
-        print("Hubo un problema al intentar descargar su archivo")
-        return
-   
-
-def repetision():
-    while True:
-        print("Desea descargar otro archivo?") 
-        change=input("Y/N ")
-        if change.lower() == "n":
-            print("Finalizando ejecucion")
-            exit()
-        elif change.lower() == "y":
-            return
-        else:
-            print("Opcion invalida")
-
-
-
-
-
-#main loop
-while True:
-    url = input("URL: ")
-
-    toDownload = []
-    if url.find("playlist") <= 0 :
-        toDownload.append(url)
+# Control de disponibilidad del Url, retorna:
+#       error = 1 si la Url ingresada no esta disponible
+#       error = None si la Url esta disponible
+#       video = True si es video
+#       video = False si es playlist
+def controlUrl(url):
+    error = 0
+    video = False
+    if url.find("playlist") >= 0: 
+        video = False
+        return error, video
     else:
-        p = Playlist(url)
-        toDownload = p.video_urls[:len(p)]
-    
-    dformato = formato(url)
-    if dformato == str(1):
-        dcalidad = calidad(url)
-
-    for url in toDownload:
-        print(url)
+        yt = YouTube(url,on_progress_callback=on_progress)
         try:
-            yt = YouTube(url, on_progress_callback=on_progress)
-            if len(toDownload) == 1:
-                dnombre = nombre(yt.title)
-            else:
-                dnombre = yt.title
-        except:
-            print("hubo un problema con su link")
-            break
-        stream = captura(dformato, dcalidad)
-        descarga(dformato, dnombre)
-    repetision()
-            
-        
-    
+            yt.check_availability()
+            video = True
+            return error, video
+        except Exception as e:
+            error = str(e)
+            return error, video
 
+# Creacion de la carpeta donde se descargaran los archivos
+# Ruta predeterminada: Descargas
+def pathtoDownload(newPath):
+    if len(newPath) == 0:
+        newPath = "C:/Users/" + usuario + "/Downloads/Musica/"
+        if os.path.exists(newPath) == False:
+            os.mkdir(newPath)
+    else:
+        if os.path.exists(newPath) == False:
+            os.mkdir(newPath)
+    return newPath
+
+# Obtiene el Stream
+# Descarga el Stream
+def download(format,newName,newPath,calidad):
+    try:
+        if format == str(1):
+            stream = yt.streams.filter(resolution = ("720" if calidad == str(2) else "1080"))
+        else:
+            stream = yt.streams.get_by_itag(251)
+        if format == str(1):
+            stream.first().download(filename = newName + ".mp4", output_path = newPath)
+        else:
+            stream.download(filename=newName + ".mp3", output_path = newPath)
+    except Exception as e:
+        print(e)
+    
+#--------------main loop-----------
+while True:
+    calidad = 0
+    url = input("URL: ")
+    error, video = controlUrl(url)
+    if error != 0:
+        print(error)
+        break
+    newPath = input("Desea cambiar la ruta de descarga? \nEnter para descargar en Descargas/Musica: ")
+    newPath = pathtoDownload(newPath)
+ 
+    while format != str(1) and format != str(2) :
+        print("Elija el formato: 1-mp4, 2-mp3")
+        format = input("Fortmato: ")
+    if format == str(1):
+        while calidad != str(1) and calidad != str(2) :
+            print("Elija la calidad: 1-1080, 2-720")
+            calidad = input("Calidad: ")  
+    if video == True:
+        yt = YouTube(url,on_progress_callback=on_progress)
+        print("El nombre del video es " + yt.title)
+        newName = input("Si desea cambiar el nombre ingreselo \nEnter si no desea cambiar el nombre: ")
+        if len(newName) == 0:
+            newName = yt.title
+        print("Descargand...")
+        download(format,newName,newPath,calidad)
+    else:
+        playlist = Playlist(url)
+        toDownload = playlist.video_urls[:len(playlist)]
+        for url in playlist.video_urls[:len(playlist)]:
+            try:
+                yt = YouTube(url,on_progress_callback=on_progress)
+                yt.check_availability()
+                print("Descargando: " + newName)
+            except Exception as e:
+                error = True
+                print(e)
+            if error == False:
+                newName = yt.title
+                download(format,newName,newPath,calidad)        
